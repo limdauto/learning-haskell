@@ -57,7 +57,7 @@ evalStr str = case parseExp ExprT.Lit ExprT.Add ExprT.Mul str of
     Nothing -> Nothing
 
 compile :: String -> Maybe Program
-compile str = parseExp lit add mul str
+compile = parseExp lit add mul
 
 -- test arithmatic experssions
 testExp :: Expr a => Maybe a
