@@ -1,3 +1,7 @@
+{-# OPTIONS_GHC -fno-warn-missing-methods #-}
+{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Fibs where
 
 fibs2 :: [Integer]
@@ -28,3 +32,20 @@ nats = streamify [0..]
 ruler :: Stream Integer
 ruler = ruling nats
     where ruling (Element x s) = interleaveStreams (streamRepeat x) (ruling s)
+
+-- in the voice of Chandler Bing, OH. MY. GOD.
+
+x :: Stream Integer
+x = Element 0 (Element 1 (streamRepeat 0))
+
+instance Num (Stream Integer) where
+    fromInteger n = Element n (streamRepeat 0)
+    negate (Element n s) = Element (-n) (negate s)
+    (+) (Element n ns) (Element m ms) = Element (n+m) ((+) ns ms)
+    (*) (Element n ns) b@(Element m ms) = Element (n*m) ((streamMap (*n) ms) + ns*b)
+
+instance Fractional (Stream Integer) where
+    (/) a@(Element n ns) b@(Element m ms) = let q = a / b in Element (n `div` m) (streamMap (`div` m) (ns - q*ms))
+
+fibs3 :: Stream Integer
+fibs3 = x / (1 - x - x^(2 :: Integer))
