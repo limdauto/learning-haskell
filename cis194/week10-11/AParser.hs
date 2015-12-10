@@ -33,6 +33,9 @@ satisfy p = Parser f
 char :: Char -> Parser Char
 char c = satisfy (== c)
 
+charA = char 'a'
+charB = char 'b'
+
 {- For example:
 
 *Parser> runParser (satisfy isUpper) "ABC"
@@ -66,35 +69,29 @@ instance Functor Parser where
 
 -- http://stackoverflow.com/questions/25587787/better-applicative-instance-for-parser-haskell
 instance Applicative Parser where
-  pure a      = Parser (\s -> Just(a, s))
-  p1 <*> p2   = Parser (combine p1 p2)
+  pure a = Parser (\s -> Just(a, s))
+  p1 <*> p2 = Parser (combine p1 p2)
     where combine p1 p2 s = case runParser p1 s of
                               Nothing -> Nothing
                               Just (f, s1) -> case runParser p2 s1 of
                                                 Nothing -> Nothing
-                                                Just (x, s2) -> Just (f x, s2) 
+                                                Just (x, s2) -> Just (f x, s2)
 
-compose f = fmap (first f)
+instance Alternative Parser where
+  empty = Parser (\_ -> Nothing)
+  p1 <|> p2 = Parser (pick p1 p2)
+    where pick p1 p2 s = case runParser p1 s of
+                            Nothing -> runParser p2 s
+                            x -> x
 
 abParser :: Parser (Char, Char)
-abParser = charA <*> charB
-  where step1 = runParser (char 'a') 
-        charA = Parser (compose (\x y -> (x, y)) . step1)
-        charB = char 'b'
+abParser = pure (,) <*> charA <*> charB
 
 abParser_ :: Parser ()
-abParser_ = charA <*> charB
-  where step1 = runParser (char 'a') 
-        charA = Parser (compose (\x y -> ()) . step1)
-        charB = char 'b'
-
-spacedInt :: String -> String
-spacedInt s = case runParser (char ' ') s of
-                Nothing -> ""
-                Just (_, s1) -> s1
+abParser_ = pure (\_ _ -> ()) <*> charA <*> charB
 
 intPair :: Parser [Integer]
-intPair = int1 <*> int2
-  where step1 = runParser posInt
-        int1 = Parser (compose (\x y -> [x, y]) . step1)
-        int2 = Parser (step1 . spacedInt)
+intPair = pure (\x y -> [x, y]) <*> posInt <*> (pure (\_ x -> x) <*> char ' ' <*> posInt)
+
+intOrUppercase :: Parser ()
+intOrUppercase = let nullify = pure (\_ -> ()) in nullify <*> posInt <|> nullify <*> (satisfy isUpper)
