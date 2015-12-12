@@ -85,13 +85,13 @@ instance Alternative Parser where
                             x -> x
 
 abParser :: Parser (Char, Char)
-abParser = pure (,) <*> charA <*> charB
+abParser = liftA2 (,) charA charB
 
 abParser_ :: Parser ()
-abParser_ = pure (\_ _ -> ()) <*> charA <*> charB
+abParser_ = liftA2 (\_ _ -> ()) charA charB
 
 intPair :: Parser [Integer]
-intPair = pure (\x y -> [x, y]) <*> posInt <*> (pure (\_ x -> x) <*> char ' ' <*> posInt)
+intPair = liftA2 (\x y -> [x, y]) posInt ((satisfy isSpace) *> posInt)
 
 intOrUppercase :: Parser ()
-intOrUppercase = let nullify = pure (\_ -> ()) in nullify <*> posInt <|> nullify <*> (satisfy isUpper)
+intOrUppercase = let f = pure (const ()) in f <*> posInt <|> f <*> (satisfy isUpper)
