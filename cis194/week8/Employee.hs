@@ -68,5 +68,5 @@ nextLevel boss scenarios = foldr1 reduce scenarios
   where reduce pair1 pair2 = (moreFun (glCons boss (fst pair1)) (glCons boss (fst pair2)), moreFun (snd pair1) (snd pair2))
 
 maxFun :: Tree Employee -> GuestList
-maxFun (Node root subforest) =
-  
+maxFun = undefined
+

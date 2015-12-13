@@ -10,3 +10,4 @@ My nth attempt to learning this freaking language.
 
 - [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
 - [Applicative Paper](http://www.staff.city.ac.uk/~ross/papers/Applicative.html)
+- [The Trivial Monad](http://blog.sigfpe.com/2007/04/trivial-monad.html)
