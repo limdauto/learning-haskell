@@ -7,6 +7,7 @@ My nth attempt to learning this freaking language.
 | Resource        | Status           | Reflection  | Rating |
 | --------------- | :----------------: | ----------- | ------ |
 | Brent Yorgey's Haskell class [UPenn's CIS194](http://www.seas.upenn.edu/~cis194/spring13/) | ✔ | [Blog post](http://limdauto.github.io/posts/2015-12-13-reflections-brent-yorgey-haskell-class.html)| ★★★★★ |
+| [Write yourself a Scheme](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours) | In progress | | |
 
 ## References:
 
