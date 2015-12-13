@@ -47,8 +47,8 @@ data SExpr = A Atom
   deriving Show
 
 parseSExpr :: Parser SExpr
-parseSExpr = (pure Comb <*> comb) <|> (pure A <*> atom)
-    where atom = spaces *> (pure N <*> posInt) <|> (pure I <*> ident) <* spaces
+parseSExpr = Comb <$> comb <|> A <$> atom
+    where atom = spaces *> (N <$> posInt) <|> (I <$> ident) <* spaces
           comb =  openParen *> zeroOrMore parseSExpr <* closeParen
           openParen = spaces *> char '(' *> spaces
           closeParen = spaces <* char ')' <* spaces
