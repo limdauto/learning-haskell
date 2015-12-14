@@ -11,6 +11,7 @@ My nth attempt to learning this freaking language.
 
 ## References:
 
-- [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
 - [Applicative Paper](http://www.staff.city.ac.uk/~ross/papers/Applicative.html)
 - [The Trivial Monad](http://blog.sigfpe.com/2007/04/trivial-monad.html)
+- [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
+- [Write yourself a Scheme in 48 Hours](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/) 
