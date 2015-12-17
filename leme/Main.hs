@@ -10,7 +10,18 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
-    deriving Show
+
+instance Show LispVal where
+    show (String contents) = "\"" ++ contents ++ "\""
+    show (Atom name) = name
+    show (Number contents) = show contents
+    show (Bool True) = "#t"
+    show (Bool False) = "#f"
+    show (List contents) = "(" ++ unwordsList contents ++ ")"
+    show (DottedList x xs) = "(" ++ unwordsList x ++ " . " ++ show xs ++ ")"
+
+unwordsList :: [LispVal] -> String
+unwordsList = unwords . map show
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
@@ -71,12 +82,48 @@ parseExpr = parseAtom
                 char ')'
                 return x
 
-readExpr :: String -> String
+readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "lisp" input of
-                    Left err -> "No match: " ++ show err
-                    Right err -> "Found value"
+                    Left err -> String $ "No match: " ++ show err
+                    Right val -> val
+
+-----------------------------------------------------------------------
+-- Eval
+-----------------------------------------------------------------------
+eval :: LispVal -> LispVal
+eval val@(String _) = val
+eval val@(Number _) = val
+eval val@(Bool _) = val
+eval (List [Atom "quote", val]) = val
+eval (List (Atom func : args)) = apply func $ map eval args
+
+-- https://www.haskell.org/onlinereport/standard-prelude.html#$vmaybe
+-- maybe n f Nothing = n
+-- maybe n f (Just x) = f x
+apply :: String -> [LispVal] -> LispVal
+apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+
+primitives :: [(String, [LispVal] -> LispVal)]
+primitives = [("+", numericBinop (+)),
+              ("-", numericBinop (-)),
+              ("*", numericBinop (*)),
+              ("/", numericBinop div),
+              ("mod", numericBinop mod),
+              ("quotient", numericBinop quot),
+              ("remainder", numericBinop rem)]
+
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
+numericBinop f xs = Number $ foldr1 f $ map unpacknum xs
+
+-- TODO: improve unpacknum for string
+unpacknum :: LispVal -> Integer
+unpacknum (Number n) = n
+unpacknum (String s)
+    | null parsed   = 0
+    | otherwise     = fst . head $ parsed
+    where parsed = reads s :: [(Integer, String)]
+unpacknum (List [n]) = unpacknum n
+unpacknum _ = 0
 
 main :: IO ()
-main = do
-        (expr:_) <- getArgs
-        putStrLn (readExpr expr)
+main = getArgs >>= (print . eval . readExpr . head)
