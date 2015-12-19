@@ -22,3 +22,9 @@ instance Show LispError where
     show (TypeMismatch expected found) = "Invalid type: expected " ++ expected
                                             ++ ", found " ++ show found
     show (Parser parseErr)             = "Parse error at " ++ show parseErr
+
+type ThrowsError = Either LispError
+trapError action = catchError action (return . show)
+
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val

@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad
+import Control.Monad.Except
 import System.Environment
 import Text.ParserCombinators.Parsec hiding (spaces)
 
@@ -66,28 +67,31 @@ parseExpr = parseAtom
                 char ')'
                 return x
 
-readExpr :: String -> LispVal
+readExpr :: String -> ThrowsError LispVal
 readExpr input = case parse parseExpr "lisp" input of
-                    Left err -> String $ "No match: " ++ show err
-                    Right val -> val
+                    Left err -> throwError $ Parser err
+                    Right val -> return val
 
 -----------------------------------------------------------------------
 -- Eval
 -----------------------------------------------------------------------
-eval :: LispVal -> LispVal
-eval val@(String _) = val
-eval val@(Number _) = val
-eval val@(Bool _) = val
-eval (List [Atom "quote", val]) = val
-eval (List (Atom func : args)) = apply func $ map eval args
+eval :: LispVal -> ThrowsError LispVal
+eval val@(String _) = return val
+eval val@(Number _) = return val
+eval val@(Bool _) = return val
+eval (List [Atom "quote", val]) = return val
+eval (List (Atom func : args)) = mapM eval args >>= apply func
+eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 -- https://www.haskell.org/onlinereport/standard-prelude.html#$vmaybe
 -- maybe n f Nothing = n
 -- maybe n f (Just x) = f x
-apply :: String -> [LispVal] -> LispVal
-apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+apply :: String -> [LispVal] -> ThrowsError LispVal
+apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
+                        ($ args)
+                        (lookup func primitives)
 
-primitives :: [(String, [LispVal] -> LispVal)]
+primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
@@ -96,18 +100,23 @@ primitives = [("+", numericBinop (+)),
               ("quotient", numericBinop quot),
               ("remainder", numericBinop rem)]
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
-numericBinop f xs = Number $ foldr1 f $ map unpacknum xs
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+numericBinop op []              = throwError $ NumArgs 2 []
+numericBinop op singleVal@[_]   = throwError $ NumArgs 2 singleVal
+numericBinop op params          = mapM unpacknum params >>= return . Number . foldr1 op
 
 -- TODO: improve unpacknum for string
-unpacknum :: LispVal -> Integer
-unpacknum (Number n) = n
+unpacknum :: LispVal -> ThrowsError Integer
+unpacknum (Number n) = return n
 unpacknum (String s)
-    | null parsed   = 0
-    | otherwise     = fst . head $ parsed
+    | null parsed   = throwError $ TypeMismatch "number" $ String s
+    | otherwise     = return . fst . head $ parsed
     where parsed = reads s :: [(Integer, String)]
 unpacknum (List [n]) = unpacknum n
-unpacknum _ = 0
+unpacknum notNum = throwError $ TypeMismatch "number" notNum
 
 main :: IO ()
-main = getArgs >>= (print . eval . readExpr . head)
+main = do
+    args <- getArgs
+    evaled <- return $ liftM show $ readExpr (head args) >>= eval
+    putStrLn $ extractValue $ trapError evaled

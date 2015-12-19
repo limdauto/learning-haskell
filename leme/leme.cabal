@@ -21,6 +21,7 @@ executable leme
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.8 && <4.9,
-                       parsec >= 3.1
+                       parsec >= 3.1,
+                       mtl >= 2.2.1
   -- hs-source-dirs:
   default-language:    Haskell2010
