@@ -8,7 +8,6 @@ import System.Environment
 import Text.ParserCombinators.Parsec hiding (spaces)
 
 import LispData
-import LispError
 import Parsers
 import Vars
 

@@ -4,7 +4,7 @@ import Control.Monad
 import System.IO
 
 import Eval
-import LispError
+import LispData
 import Parsers
 import Vars
 

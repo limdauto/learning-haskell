@@ -4,9 +4,6 @@ import Control.Monad.Except
 import Data.IORef
 
 import LispData
-import LispError
-
-type Env = IORef [(String, IORef LispVal)]
 
 nullEnv :: IO Env
 nullEnv = newIORef []

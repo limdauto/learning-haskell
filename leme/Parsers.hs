@@ -5,7 +5,6 @@ import Control.Monad.Except
 import Text.ParserCombinators.Parsec hiding (spaces)
 
 import LispData
-import LispError
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
