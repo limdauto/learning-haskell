@@ -16,3 +16,4 @@ My nth attempt to learning this freaking language.
 - [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia)
 - [Write yourself a Scheme in 48 Hours](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/) 
 - [Gentle introduction to monad transformers](https://github.com/kqr/gists/blob/master/articles/gentle-introduction-monad-transformers.md)
+- [Template Haskell tutorial](https://github.com/leonidas/codeblog/blob/master/2011/2011-12-27-template-haskell.md)
