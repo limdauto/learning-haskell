@@ -5,6 +5,6 @@ main = readLn >>= \t ->
     readLn >>= putStrLn . solveFor
 
 notDivBy3 = (/= 0) . (`mod` 3)
-solveFor n = case dropWhile notDivBy3 [n,n-5,n-10] of
+solveFor n = case dropWhile notDivBy3 [n, n-5, minimum [n-10, -1]] of
                 (n5:_) -> replicate n5 '5' ++ replicate (n-n5) '3'
                 []     -> "-1"
