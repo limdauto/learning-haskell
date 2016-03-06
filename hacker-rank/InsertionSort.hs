@@ -67,3 +67,24 @@ insert x (v:xs) = if x > v then v : (insert x xs) else (x:v:xs)
 insertionSort :: Ord a => [a] -> [a]
 insertionSort [] = []
 insertionSort (x:xs) = insert x (insertionSort xs)
+
+{-
+Best solution by far: https://codepair.hackerrank.com/paper/xopASikR?b=eyJyb2xlIjoiY2FuZGlkYXRlIiwibmFtZSI6ImxpbWRhdXRvIiwiZW1haWwiOiJsaW1kYXV0b0BnbWFpbC5jb20ifQ%3D%3D
+
+insertionSortSteps :: Ord a => [a] -> [[a]]
+insertionSortSteps [] = [[]]
+insertionSortSteps (h:t) = go [h] t []
+  where go _ [] trail = trail
+        go sorted rest trail = go sorted' rest' (trail ++ [sorted' ++ rest'])
+          where sorted' = insertInto (head rest) sorted
+                rest' = tail rest
+        insertInto v xs = before ++ [v] ++ after
+          where (before, after) = span (<v) xs
+
+main :: IO ()
+main = do
+  inp <- getContents
+  let xs = (map read $ words ((lines inp) !! 1) ) :: [Int]
+  putStr . unlines . map (unwords . map show) $ insertionSortSteps xs
+
+-}
