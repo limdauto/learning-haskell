@@ -83,8 +83,15 @@ backtrackOne box@(BoundingRect {topLeft, topRight, bottomLeft, bottomRight}) pos
     | otherwise             = Position (x - 1) y
 
 
+backtrackN :: BoundingRect -> Int -> Position -> Position
+backtrackN box@(BoundingRect {topLeft, topRight, bottomLeft, bottomRight})
+           numRotations pos = if n == 0 then pos else foldl' (\p _ -> backtrackOne box p) pos [1..n]
+    where rows = (y bottomLeft) - (y topLeft) + 1
+          cols = (x topRight) - (x topLeft) + 1
+          n    = numRotations `mod` ((rows + cols) * 2 - 4)
+
 backtrack :: Matrix -> BoundingRect -> Int -> Position -> (Position, Int)
-backtrack matrix box numRotations pos = let origin = foldl' (\p _ -> backtrackOne box p) pos [1..numRotations] in (pos, elemAt matrix origin)
+backtrack matrix box numRotations pos = let origin = backtrackN box numRotations pos in (pos, elemAt matrix origin)
 
 
 boundingBoxes :: Size -> [BoundingRect]
