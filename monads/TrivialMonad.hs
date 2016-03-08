@@ -1,8 +1,5 @@
 module TrivialMonad where
 
-import Control.Monad
-import Control.Applicative
-
 data TrivialMonad x = TrivialMonad x deriving Show
 
 instance Functor TrivialMonad where
