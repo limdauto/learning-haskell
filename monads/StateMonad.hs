@@ -15,3 +15,9 @@ instance Monad (State s) where
     return a        = State $ \s -> (a,s)
     (State x) >>= f = State $ \s -> let (v, s') = x s in runState (f v) s'
 
+get :: State s s
+get = State $ \s -> (s,s)
+
+put :: s -> State s ()
+put x = State $ const ((), x)
+
