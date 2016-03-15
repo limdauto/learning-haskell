@@ -23,8 +23,8 @@ instance Functor f => Functor (Free f) where
 
 instance Functor f => Applicative (Free f) where
     pure x = Pure x
-    g <*> x = fmap₂ g x
-        where fmap₂ h x y = (fmap h x) <*> y
+    g <*> x = fmap₂ ($) g x
+        where fmap₂ h z y = (fmap h z) <*> y
 
 instance Functor f => Monad (Free f) where
     return x = Pure x
