@@ -43,3 +43,11 @@ userP = User <$> one (Option "username" Nothing Just)
 
 one :: Option a -> Free Option a
 one opt = Pure opt
+
+
+-- Application 2: http://degoes.net/articles/modern-fp
+data CloudFilesF a
+  = SaveFile Path Bytes a
+  | ListFiles Path (List Path -> a)
+
+type CloudFilesAPI a = Free CloudFilesF a
