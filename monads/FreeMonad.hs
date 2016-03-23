@@ -1,8 +1,14 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 module FreeMonad where
 
--- http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
--- http://dlaing.org/cofun/posts/free_and_cofree.html
--- http://arxiv.org/pdf/1403.0749v3.pdf
+{-
+    http://www.haskellforall.com/2012/06/you-could-have-invented-free-monads.html
+    http://dlaing.org/cofun/posts/free_and_cofree.html
+    http://arxiv.org/pdf/1403.0749v3.pdf
+    http://okmij.org/ftp/Haskell/extensible/more.pdf
+    http://apfelmus.nfshost.com/articles/operational-monad.html
+-}
 data Free f a = Pure a
               | Free (f (Free f a))
 
@@ -33,8 +39,10 @@ data Option a = Option {
     optReader :: String -> Maybe a
 } deriving Functor
 
-readInt :: String -> Int
-readInt x = read x :: Int
+readInt :: String -> Maybe Int
+readInt x = case reads x of
+            [(x', "")] -> Just x'
+            _         -> Nothing
 
 userP :: Free Option User
 userP = User <$> one (Option "username" Nothing Just)
@@ -42,12 +50,36 @@ userP = User <$> one (Option "username" Nothing Just)
              <*> one (Option "id" Nothing readInt)
 
 one :: Option a -> Free Option a
-one opt = Pure opt
+one = undefined
 
+-- Application 2: Toy language
+data Toy b next = Output b next
+                | Bell next
+                | Done
+    deriving Functor
 
--- Application 2: http://degoes.net/articles/modern-fp
-data CloudFilesF a
-  = SaveFile Path Bytes a
-  | ListFiles Path (List Path -> a)
+{-
+ There is only one way to derive a Functor instance for Toy, see
+ http://programmers.stackexchange.com/questions/242795/what-is-the-free-monad-interpreter-pattern
+ but here is the definition
 
-type CloudFilesAPI a = Free CloudFilesF a
+ instance Functor (Toy b) where
+    fmap f (Output x next) = Output x (f next)
+    fmap f (Bell     next) = Bell     (f next)
+    fmap f  Done           = Done
+ -}
+liftF :: (Functor f) => f r -> Free f r
+liftF command = Free (fmap Pure command)
+
+output x = liftF (Output x ())
+bell     = liftF (Bell     ())
+done     = liftF  Done
+
+subroutine :: Free (Toy Char) ()
+subroutine = output 'A'
+
+program :: Free (Toy Char) r
+program = do
+    subroutine
+    bell
+    done
