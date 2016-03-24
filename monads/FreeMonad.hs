@@ -83,3 +83,13 @@ program = do
     subroutine
     bell
     done
+
+showProgram :: (Show a, Show r) => Free (Toy a) r -> String
+showProgram (Free (Output a x)) =
+    "output " ++ show a ++ "\n" ++ showProgram x
+showProgram (Free (Bell x)) =
+    "bell\n" ++ showProgram x
+showProgram (Free Done) =
+    "done\n"
+showProgram (Pure r) =
+    "return " ++ show r ++ "\n"
