@@ -35,8 +35,7 @@ eval (ChangeValue v) (Tree _ children parent left right) =
     Right $ Tree v children parent left right
 eval (Insert direction v) t@(Tree root children parent left right)
     | direction == "left"   =
-        let p@{pRoot, pChildren, pParent, pLeft, pRight} = parent
-            tree = Tree root children parent' left' right
+        let tree = Tree root children parent' left' right
             left' = Tree v [] parent' left tree
             parent' = Tree (root parent) (children parent)
         in Righ $ tree
