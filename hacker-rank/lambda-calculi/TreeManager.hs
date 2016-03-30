@@ -2,14 +2,6 @@
 import Control.Monad
 import Text.ParserCombinators.Parsec
 
-data Tree = Tree {
-    root :: Int,
-    children :: [Tree],
-    parent :: Tree,
-    left :: Tree,
-    right :: Tree
-} | Empty deriving Show
-
 data Command = ChangeValue Int
              | Visit String Int
              | Insert String Int
@@ -18,36 +10,7 @@ data Command = ChangeValue Int
     deriving Show
 
 main :: IO ()
-main = do
-    n <- liftM read getLine
-    commands <- mapM (\_ -> liftM readCommand getLine) [1..n]
-    foldM_ go r commands
-    where go tree command = case eval command tree of
-                                Left r -> print r >> return tree
-                                Right v -> return v
-
-r :: Tree
-r = Tree { root = 0, children = [], parent = Empty, left = Empty, right = Empty}
-
-eval :: Command -> Tree -> Either Int Tree
-eval Print tree = Left (root tree)
-eval (ChangeValue v) (Tree _ children parent left right) =
-    Right $ Tree v children parent left right
-eval (Insert direction v) t@(Tree root children parent left right)
-    | direction == "left"   =
-        let tree = Tree root children parent' left' right
-            left' = Tree v [] parent' left tree
-            parent' = Tree (root parent) (children parent)
-        in Righ $ tree
-    | direction == "right"  = undefined
-    | otherwise             = undefined
-eval (Visit direction v) tree
-    | direction == "left"   = undefined
-    | direction == "right"  = undefined
-    | direction == "parent" = undefined
-    | otherwise             = undefined
-eval Delete t@(Tree _ _ _ parent) = undefined
-eval _ _ = undefined
+main = undefined
 
 parseNumber :: Parser Int
 parseNumber = read <$> many1 digit
