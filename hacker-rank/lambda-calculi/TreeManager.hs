@@ -1,5 +1,6 @@
 {-# Language NamedFieldPuns #-}
 import Control.Monad
+import Control.Applicative ((<*>), (*>), (<$>), (<$), pure)
 import Text.ParserCombinators.Parsec
 
 data Command = ChangeValue Int
@@ -17,6 +18,7 @@ data Tree a = Node {
 data Crumb a = DownCrumb Int (Tree a) deriving (Show)
 type Breadcrumbs a = [Crumb a]
 type Zipper a = (Tree a, Breadcrumbs a)
+type Logs = [String]
 
 root :: Zipper Int
 root = (Node { value = 0, children = [] }, [])
@@ -28,19 +30,26 @@ main :: IO ()
 main = do
     n <- liftM read getLine
     commands <- mapM (\_ -> liftM readCommand getLine) [1..n]
-    foldM_ go root commands
+    (_, logs) <- foldM go (root, []) commands
+    mapM_ putStrLn logs
 
-go :: Zipper Int -> Command -> IO (Zipper Int)
-go z (ChangeValue x) = return $ changeValue z x
-go z (Visit direction index)
-    | direction == "left"   = return $ visitLeft z
-    | direction == "right"  = return $ visitRight z
-    | direction == "parent" = return $ visitParent z
-    | direction == "child"  = return $ visitChild z (index - 1)
-go z (Insert direction n)
-    | direction == "left"   = return $ insertLeft z n
-    | direction == "right"  = return $ insertRight z n
-    | direction == "child"  = return $ insertChild z n
+go :: (Zipper Int, Logs) -> Command -> IO (Zipper Int, Logs)
+go (z, logs) (ChangeValue x) = return $ (changeValue z x, logs)
+go (z, logs) (Visit direction index)
+    | direction == "left"   = return $ (visitLeft z, logs)
+    | direction == "right"  = return $ (visitRight z, logs)
+    | direction == "parent" = return $ (visitParent z, logs)
+    | direction == "child"  = return $ (visitChild z (index - 1), logs)
+go (z, logs) (Insert direction n)
+    | direction == "left"   = return $ (insertLeft z n, logs)
+    | direction == "right"  = return $ (insertRight z n, logs)
+    | direction == "child"  = return $ (insertChild z n, logs)
+go (z, logs) Delete = return $ (delete z, logs)
+go (z, logs) Print = return $ (z, logs ++ [show . value . fst $ z])
+-- go (z, logs) Print = return $ (z, logs ++ [show . value . fst $ z, show . children . fst $ z])
+
+delete :: Zipper a -> Zipper a
+delete (_, DownCrumb index parent:bs) = (removeChildAtIndex index parent, bs)
 
 visitLeft :: Zipper a -> Zipper a
 visitLeft z@(_, DownCrumb index _:_) = let parent = visitParent z in
@@ -54,29 +63,38 @@ visitParent :: Zipper a -> Zipper a
 visitParent (_, DownCrumb _ parent:bs) = (parent, bs)
 
 visitChild :: Zipper a -> Int -> Zipper a
-visitChild (t@(Node _ children), bs) index =
-    (children !! index, DownCrumb index t:bs)
+visitChild (parent@(Node _ children), bs) index =
+    (children !! index, DownCrumb index parent:bs)
 
 insertLeft :: Zipper Int -> Int -> Zipper Int
 insertLeft (_, DownCrumb index parent:bs) x =
     let newParent = (insertChildAtIndex (index - 1) x parent, bs) in
-    visitChild newParent index
+    visitChild newParent (index + 1)
 
 insertRight :: Zipper Int -> Int -> Zipper Int
 insertRight (_, DownCrumb index parent:bs) x =
     let newParent = (insertChildAtIndex (index + 1) x parent, bs) in
     visitChild newParent index
 
-insertChild :: Zipper a -> Int -> Zipper a
-insertChild (Node value children, bs) x = undefined
+insertChild :: Zipper Int -> Int -> Zipper Int
+insertChild (Node value children, bs) x = let child = node x in
+    (Node value (child:children), bs)
 
 insertChildAtIndex :: Int -> Int -> Tree Int -> Tree Int
-insertChildAtIndex index x (Node _ children) = let newNode = node x in
-    Node x (insertAt index newNode children)
+insertChildAtIndex index x (Node value children) = let newNode = node x in
+    Node value (insertAt index newNode children)
+
+removeChildAtIndex :: Int -> Tree a -> Tree a
+removeChildAtIndex index (Node value children) =
+    Node value (removeAt index children)
 
 insertAt :: Int -> a -> [a] -> [a]
 insertAt z y xs = as ++ (y:bs)
-                  where (as, bs) = splitAt z xs
+    where (as, bs) = splitAt z xs
+
+removeAt :: Int -> [a] -> [a]
+removeAt z xs = as ++ bs
+    where (as, (_:bs)) = splitAt z xs
 
 changeValue :: Zipper a -> a -> Zipper a
 changeValue (Node _ children, bs) x = (Node x children, bs)
