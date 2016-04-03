@@ -9,15 +9,20 @@ data Command = ChangeValue Int
              | Print
     deriving Show
 
-data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show)
-data Crumb a = LeftCrumb a (Tree a)
-             | RightCrumb a (Tree a)
-             deriving (Show)
+data Tree a = Node {
+    value :: a,
+    children :: [Tree a]
+} deriving (Show)
+
+data Crumb a = DownCrumb Int (Tree a) deriving (Show)
 type Breadcrumbs a = [Crumb a]
 type Zipper a = (Tree a, Breadcrumbs a)
 
 root :: Zipper Int
-root = (Node 0 Empty Empty, [])
+root = (Node { value = 0, children = [] }, [])
+
+node :: a -> Tree a
+node x = Node x []
 
 main :: IO ()
 main = do
@@ -27,29 +32,54 @@ main = do
 
 go :: Zipper Int -> Command -> IO (Zipper Int)
 go z (ChangeValue x) = return $ changeValue z x
-go z (Visit direction n)
+go z (Visit direction index)
     | direction == "left"   = return $ visitLeft z
     | direction == "right"  = return $ visitRight z
     | direction == "parent" = return $ visitParent z
-    | direction == "child"  = return $ visitChild z n
-
+    | direction == "child"  = return $ visitChild z (index - 1)
+go z (Insert direction n)
+    | direction == "left"   = return $ insertLeft z n
+    | direction == "right"  = return $ insertRight z n
+    | direction == "child"  = return $ insertChild z n
 
 visitLeft :: Zipper a -> Zipper a
-visitLeft (Node x l r, bs) = (l, LeftCrumb x r:bs)
+visitLeft z@(_, DownCrumb index _:_) = let parent = visitParent z in
+    visitChild parent (index - 1)
 
 visitRight :: Zipper a -> Zipper a
-visitRight (Node x l r, bs) = (r, RightCrumb x l:bs)
+visitRight z@(_, DownCrumb index _:_) = let parent = visitParent z in
+    visitChild parent (index + 1)
 
 visitParent :: Zipper a -> Zipper a
-visitParent (t, LeftCrumb x r:bs) = (Node x t r, bs)
-visitParent (t, RightCrumb x l:bs) = (Node x l t, bs)
+visitParent (_, DownCrumb _ parent:bs) = (parent, bs)
 
 visitChild :: Zipper a -> Int -> Zipper a
-visitChild = undefined
+visitChild (t@(Node _ children), bs) index =
+    (children !! index, DownCrumb index t:bs)
+
+insertLeft :: Zipper Int -> Int -> Zipper Int
+insertLeft (_, DownCrumb index parent:bs) x =
+    let newParent = (insertChildAtIndex (index - 1) x parent, bs) in
+    visitChild newParent index
+
+insertRight :: Zipper Int -> Int -> Zipper Int
+insertRight (_, DownCrumb index parent:bs) x =
+    let newParent = (insertChildAtIndex (index + 1) x parent, bs) in
+    visitChild newParent index
+
+insertChild :: Zipper a -> Int -> Zipper a
+insertChild (Node value children, bs) x = undefined
+
+insertChildAtIndex :: Int -> Int -> Tree Int -> Tree Int
+insertChildAtIndex index x (Node _ children) = let newNode = node x in
+    Node x (insertAt index newNode children)
+
+insertAt :: Int -> a -> [a] -> [a]
+insertAt z y xs = as ++ (y:bs)
+                  where (as, bs) = splitAt z xs
 
 changeValue :: Zipper a -> a -> Zipper a
-changeValue (Empty, bs) a = (Empty, bs)
-changeValue (Node _ l r, bs) x = (Node x l r, bs)
+changeValue (Node _ children, bs) x = (Node x children, bs)
 
 parseNumber :: Parser Int
 parseNumber = read <$> many1 digit
